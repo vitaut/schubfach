@@ -683,8 +683,8 @@ auto floor_log10_pow2(int e) noexcept -> int {
 }
 
 auto write8digits(char *buffer, unsigned n) noexcept -> char * {
-  // Repeatedly divide by 10**8 using the method from Division-Free
-  // Binary-to-Decimal Conversion: https://inria.hal.science/hal-00864293/.
+  // Based on Division-Free Binary-to-Decimal Conversion:
+  // https://inria.hal.science/hal-00864293/.
   constexpr int shift = 28;
   constexpr uint64_t magic = 193'428'131'138'340'668;
   unsigned y = (umul128_upper64((uint64_t(n) + 1) << shift, magic) >> 20) - 1;
