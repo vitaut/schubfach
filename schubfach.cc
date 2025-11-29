@@ -11,6 +11,8 @@
 #include <bit>     // std::bit_cast
 #include <limits>  // std::numeric_limits
 
+namespace {
+
 // Significands of overestimates of powers of 10. Generated with gen-pow10.py.
 const uint64_t pow10_significands[] = {
     0x7fbbd8fe5f5e6e27, 0x497a3a2704eec3df,  // -292
@@ -749,6 +751,8 @@ void write(char* buffer, uint64_t dec_sig, int dec_exp) noexcept {
   *buffer++ = '0' + dec_exp % 10;
   *buffer = '\0';
 }
+
+}  // namespace
 
 void schubfach::dtoa(double x, char* buffer) noexcept {
   uint64_t bits = std::bit_cast<uint64_t>(x);
