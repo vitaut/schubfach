@@ -657,17 +657,12 @@ auto umul128(uint64_t x, uint64_t y) noexcept -> uint128 {
           (intermediate << 32) + (bd & mask)};
 }
 
-// Computes upper 64 bits of multiplication of two 64-bit unsigned integers.
-auto umul128_upper64(uint64_t x, uint64_t y) noexcept -> uint64_t {
-  return umul128(x, y).hi;
-}
-
 // Computes upper 64 bits of multiplication of pow10 and scaled_sig with
 // modified round-to-odd rounding of the result,
 // where pow10 = pow10_hi * 2**63 + pow10_lo.
 auto umul192_upper64_modified(uint64_t pow10_hi, uint64_t pow10_lo,
                               uint64_t scaled_sig) noexcept -> uint64_t {
-  uint64_t x_hi = umul128_upper64(pow10_lo, scaled_sig);
+  uint64_t x_hi = umul128(pow10_lo, scaled_sig).hi;
   uint128 y = umul128(pow10_hi, scaled_sig);
   uint64_t z = (y.lo >> 1) + x_hi;
   uint64_t result = y.hi + (z >> 63);
@@ -690,7 +685,7 @@ auto write8digits(char* buffer, unsigned n) noexcept -> char* {
   // https://inria.hal.science/hal-00864293/.
   constexpr int shift = 28;
   constexpr uint64_t magic = 193'428'131'138'340'668;
-  unsigned y = (umul128_upper64((uint64_t(n) + 1) << shift, magic) >> 20) - 1;
+  unsigned y = (umul128((uint64_t(n) + 1) << shift, magic).hi >> 20) - 1;
   for (int i = 0; i < 8; ++i) {
     unsigned t = 10 * y;
     *buffer++ = '0' + (t >> shift);
