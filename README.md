@@ -10,7 +10,7 @@ Usage:
 #include <stdio.h>
 
 int main() {
-  char buf[25];
+  char buf[schubfach::buffer_size];
   schubfach::dtoa(6.62607015e-34, buf);
   puts(buf);
 }
@@ -19,4 +19,3 @@ int main() {
 Average formatting time from [dtoa-benchmark](https://github.com/fmtlib/dtoa-benchmark), smaller is better:
 
 <img width="787" height="353" alt="image" src="https://github.com/user-attachments/assets/68c36484-2a1c-478c-89e4-8055880594cf" />
-
