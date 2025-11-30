@@ -758,11 +758,11 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
   uint64_t bits = std::bit_cast<uint64_t>(value);
   if ((bits >> 63) != 0) *buffer++ = '-';
 
-  constexpr int precision = std::numeric_limits<double>::digits - 1;
+  constexpr int num_sig_bits = std::numeric_limits<double>::digits - 1;
   constexpr int exp_mask = 0x7ff;
-  int bin_exp = static_cast<int>(bits >> precision) & exp_mask;
+  int bin_exp = static_cast<int>(bits >> num_sig_bits) & exp_mask;
 
-  constexpr uint64_t implicit_bit = uint64_t(1) << precision;
+  constexpr uint64_t implicit_bit = uint64_t(1) << num_sig_bits;
   uint64_t bin_sig = bits & (implicit_bit - 1);  // binary significand
 
   if (bin_exp == exp_mask) {
@@ -781,7 +781,7 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
     ++bin_exp;  // Adjust the exponent for subnormals.
     regular = true;
   }
-  bin_exp -= precision + 1023;  // Remove the exponent bias.
+  bin_exp -= num_sig_bits + 1023;  // Remove the exponent bias.
 
   // Shift the significand so that boundaries are integer.
   uint64_t bin_sig_shifted = bin_sig << 2;
