@@ -18,7 +18,8 @@ int main() {
 
 Average formatting time from [dtoa-benchmark](https://github.com/fmtlib/dtoa-benchmark), smaller is better:
 
-<img width="787" height="353" alt="image" src="https://github.com/user-attachments/assets/68c36484-2a1c-478c-89e4-8055880594cf" />
+<img width="787" height="353" alt="image"
+     src="https://github.com/user-attachments/assets/68c36484-2a1c-478c-89e4-8055880594cf" />
 
 The binary size is ~13kiB on an ARM-based macOS:
 
@@ -28,11 +29,10 @@ The binary size is ~13kiB on an ARM-based macOS:
  13K	schubfach.o
 ```
 
-Build time is ~40ms by default and ~50ms with optimizations enabled:
+Build time is ~77ms by default and ~95ms with optimizations enabled as measured by
 
 ```
-% time c++ -c -std=c++20 schubfach.cc
-c++ -c -std=c++20 schubfach.cc  0.04s user 0.04s system 88% cpu 0.087 total
-% time c++ -c -std=c++20 schubfach.cc -O2
-c++ -c -std=c++20 schubfach.cc -O2  0.05s user 0.20s system 63% cpu 0.389 total
+% time c++ -c -std=c++20 schubfach.cc [-O2]
 ```
+
+taking the best of 3 runs.
