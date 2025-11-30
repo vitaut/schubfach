@@ -756,7 +756,8 @@ void write(char* buffer, uint64_t dec_sig, int dec_exp) noexcept {
 
 void schubfach::dtoa(double value, char* buffer) noexcept {
   uint64_t bits = std::bit_cast<uint64_t>(value);
-  if ((bits >> 63) != 0) *buffer++ = '-';
+  *buffer = '-';
+  buffer += bits >> 63;
 
   constexpr int num_sig_bits = std::numeric_limits<double>::digits - 1;
   constexpr int exp_mask = 0x7ff;
@@ -765,22 +766,21 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
   constexpr uint64_t implicit_bit = uint64_t(1) << num_sig_bits;
   uint64_t bin_sig = bits & (implicit_bit - 1);  // binary significand
 
-  if (bin_exp == exp_mask) {
-    memcpy(buffer, bin_sig == 0 ? "inf" : "nan", 4);
-    return;
-  }
-
   bool regular = bin_sig != 0;
-  if (bin_exp != 0) {
-    bin_sig |= implicit_bit;
-  } else {
+  if (((bin_exp + 1) & exp_mask) <= 1) [[unlikely]] {
+    if (bin_exp != 0) {
+      memcpy(buffer, bin_sig == 0 ? "inf" : "nan", 4);
+      return;
+    }
     if (bin_sig == 0) {
       memcpy(buffer, "0", 2);
       return;
     }
+    bin_sig ^= implicit_bit;
     ++bin_exp;  // Adjust the exponent for subnormals.
     regular = true;
   }
+  bin_sig ^= implicit_bit;
   bin_exp -= num_sig_bits + 1023;  // Remove the exponent bias.
 
   // Shift the significand so that boundaries are integer.
