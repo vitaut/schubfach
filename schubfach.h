@@ -7,8 +7,8 @@ namespace schubfach {
 
 constexpr int buffer_size = 25;
 
-/// Writes the shortest correctly rounded decimal representation of `x` to
+/// Writes the shortest correctly rounded decimal representation of `value` to
 /// `buffer`. `buffer` should point to a buffer of size `buffer_size` or larger.
-void dtoa(double x, char* buffer) noexcept;
+void dtoa(double value, char* buffer) noexcept;
 
 }  // namespace schubfach

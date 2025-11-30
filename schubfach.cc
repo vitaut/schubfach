@@ -754,8 +754,8 @@ void write(char* buffer, uint64_t dec_sig, int dec_exp) noexcept {
 
 }  // namespace
 
-void schubfach::dtoa(double x, char* buffer) noexcept {
-  uint64_t bits = std::bit_cast<uint64_t>(x);
+void schubfach::dtoa(double value, char* buffer) noexcept {
+  uint64_t bits = std::bit_cast<uint64_t>(value);
   if ((bits >> 63) != 0) *buffer++ = '-';
 
   constexpr int precision = std::numeric_limits<double>::digits - 1;
