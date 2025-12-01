@@ -19,7 +19,7 @@ int main() {
 Average formatting time from [dtoa-benchmark](https://github.com/fmtlib/dtoa-benchmark), smaller is better:
 
 <img width="787" height="353" alt="image"
-     src="https://github.com/user-attachments/assets/68c36484-2a1c-478c-89e4-8055880594cf" />
+     src="https://github.com/user-attachments/assets/7d294f69-4e96-4d12-95f3-a0ebf867b479" />
 
 The binary size is ~13kiB on an ARM-based macOS:
 
