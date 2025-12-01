@@ -5,6 +5,7 @@
 
 #include "schubfach.h"
 
+#include <assert.h>  // assert
 #include <stdint.h>  // uint64_t
 #include <string.h>  // memcpy
 
@@ -634,13 +635,27 @@ const uint64_t pow10_significands[] = {
     0x4f0cedc95a718dd4, 0x5b01e8b09aa0d1b5,  //  324
 };
 
-struct uint128 {
+#ifdef __SIZEOF_INT128__
+using uint128_t = unsigned __int128;
+#else
+struct uint128_t {
   uint64_t hi;
   uint64_t lo;
+
+  explicit operator uint64_t() const noexcept { return lo; }
+
+  auto operator>>(int shift) const noexcept -> uint128_t {
+    assert(shift >= 64 && shift < 128);
+    return {0, hi >> (shift - 64)};
+  }
 };
+#endif  // __SIZEOF_INT128__
 
 // Computes 128-bit result of multiplication of two 64-bit unsigned integers.
-auto umul128(uint64_t x, uint64_t y) noexcept -> uint128 {
+auto umul128(uint64_t x, uint64_t y) noexcept -> uint128_t {
+#ifdef __SIZEOF_INT128__
+  return uint128_t(x) * y;
+#else
   constexpr uint64_t mask = ~uint32_t();
 
   uint64_t a = x >> 32;
@@ -657,6 +672,7 @@ auto umul128(uint64_t x, uint64_t y) noexcept -> uint128 {
 
   return {ac + (intermediate >> 32) + (ad >> 32) + (bc >> 32),
           (intermediate << 32) + (bd & mask)};
+#endif  // __SIZEOF_INT128__
 }
 
 // Computes upper 64 bits of multiplication of pow10 and scaled_sig with
@@ -664,10 +680,10 @@ auto umul128(uint64_t x, uint64_t y) noexcept -> uint128 {
 // where pow10 = pow10_hi * 2**63 + pow10_lo.
 auto umul192_upper64_modified(uint64_t pow10_hi, uint64_t pow10_lo,
                               uint64_t scaled_sig) noexcept -> uint64_t {
-  uint64_t x_hi = umul128(pow10_lo, scaled_sig).hi;
-  uint128 y = umul128(pow10_hi, scaled_sig);
-  uint64_t z = (y.lo >> 1) + x_hi;
-  uint64_t result = y.hi + (z >> 63);
+  uint64_t x_hi = static_cast<uint64_t>(umul128(pow10_lo, scaled_sig) >> 64);
+  uint128_t y = umul128(pow10_hi, scaled_sig);
+  uint64_t z = (static_cast<uint64_t>(y) >> 1) + x_hi;
+  uint64_t result = static_cast<uint64_t>(y >> 64) + (z >> 63);
   constexpr uint64_t mask = (uint64_t(1) << 63) - 1;
   // OR with 1 if z is not divisible by 2**63.
   return result | (((z & mask) + mask) >> 63);
@@ -687,7 +703,9 @@ auto write8digits(char* buffer, unsigned n) noexcept -> char* {
   // https://inria.hal.science/hal-00864293/.
   constexpr int shift = 28;
   constexpr uint64_t magic = 193'428'131'138'340'668;
-  unsigned y = (umul128((uint64_t(n) + 1) << shift, magic).hi >> 20) - 1;
+  unsigned y =
+      static_cast<uint64_t>(umul128((uint64_t(n) + 1) << shift, magic) >> 84) -
+      1;
   for (int i = 0; i < 8; ++i) {
     unsigned t = 10 * y;
     *buffer++ = '0' + (t >> shift);
