@@ -21,6 +21,16 @@ Average formatting time from [dtoa-benchmark](https://github.com/fmtlib/dtoa-ben
 <img width="787" height="353" alt="image"
      src="https://github.com/user-attachments/assets/7d294f69-4e96-4d12-95f3-a0ebf867b479" />
 
+| Function      | Time (ns) | Speedup |
+|---------------|-----------|---------|
+| ostringstream | 880.245   | 1.00x   |
+| sprintf       | 742.654   | 1.19x   |
+| doubleconv    | 83.629    | 10.53x  |
+| ryu           | 37.184    | 23.67x  |
+| schubfach     | 24.865    | 35.40x  |
+| fmt           | 22.331    | 39.42x  |
+| dragonbox     | 20.782    | 42.36x  |
+
 The binary size is ~13kiB on an ARM-based macOS:
 
 ```
