@@ -805,17 +805,16 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
   uint64_t bin_sig_shifted = bin_sig << 2;
 
   // Compute the shifted boundaries of the rounding interval (Rv).
-  uint64_t lower = bin_sig_shifted - (regular ? 2 : 1);
+  uint64_t lower = bin_sig_shifted - (regular + 1);
   uint64_t upper = bin_sig_shifted + 2;
 
   // floor(log10(3/4) * 2**fixed_precision)
   constexpr long long floor_log10_3_over_4_fixed = -274'743'187'321;
 
   // Compute the decimal exponent.
-  int dec_exp =
-      regular ? floor_log10_pow2(bin_exp)
-              : (bin_exp * floor_log10_2_fixed + floor_log10_3_over_4_fixed) >>
-                    fixed_precision;
+  int dec_exp = (bin_exp * floor_log10_2_fixed +
+                 (floor_log10_3_over_4_fixed & (regular - 1LL))) >>
+                fixed_precision;
 
   constexpr int dec_exp_min = -292;
   int index = (-dec_exp - dec_exp_min) * 2;
