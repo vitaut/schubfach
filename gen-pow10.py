@@ -24,4 +24,4 @@ for dec_exp in range(-dec_exp_max, -dec_exp_min + 1, 1):
     else:
         result = dec_pow // bin_pow
     result = result + 1
-    print(f"{result >> 63:#x}, {result & (2**63 - 1):#018x}, // {dec_exp:4}")
+    print(f"{{{result >> 63:#x}, {result & (2**63 - 1):#018x}}}, // {dec_exp:4}")
