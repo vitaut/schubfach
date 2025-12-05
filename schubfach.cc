@@ -834,10 +834,11 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
   constexpr int log2_pow10_sig = 217'707, log2_pow10_exp = 16;
 
   // Shift to ensure the intermediate result in umul192_upper64_modified has
-  // a fixed 128-bit fractional width. For example, 3 * 2**60 and 3 * 2**61
-  // both have dec_exp = 18 and dividing them by 10**dec_exp would have the
+  // a fixed 128-bit fractional width. For example, 3 * 2**59 and 3 * 2**60
+  // both have dec_exp = 2 and dividing them by 10**dec_exp would have the
   // decimal point in different (bit) positions without the shift:
-  // 3 * 2**60 / 10**18 = 3.45..., 3 * 2**61 / 10**18 = 6.91...
+  //   3 * 2**59 / 100 = 1.72...e+16 (shift = 3)
+  //   3 * 2**60 / 100 = 3.45...e+16 (shift = 4)
   assert(dec_exp >= -350 && dec_exp <= 350);
   int shift = bin_exp + (-dec_exp * log2_pow10_sig >> log2_pow10_exp) + 2;
 
