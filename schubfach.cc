@@ -828,7 +828,10 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
   constexpr int fixed_precision2 = 38;
 
   // Shift to ensure the intermediate result in umul192_upper64_modified has
-  // a fixed 128-bit fractional width.
+  // a fixed 128-bit fractional width. For example, 3 * 2**60 and 3 * 2**61
+  // both have dec_exp = 18 and dividing them by 10**dec_exp would give
+  // misaligned results without the shift:
+  // 3 * 2**60 / 10**18 = 3.45..., 3 * 2**61 / 10**18 = 6.91...
   int shift =
       bin_exp + (-dec_exp * floor_log2_pow10_fixed >> fixed_precision2) + 2;
 
