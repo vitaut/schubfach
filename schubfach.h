@@ -1,5 +1,5 @@
 // Implementation of the Schubfach algorithm:
-// https://drive.google.com/file/d/1IEeATSVnEE6TkrHlCYNY2GjaraBjOT4f.
+// https://fmt.dev/papers/Schubfach4.pdf.
 // Copyright (c) 2025 - present, Victor Zverovich
 // Distributed under the MIT license (see LICENSE).
 
