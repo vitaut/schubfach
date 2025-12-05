@@ -10,7 +10,7 @@
 | $\bar{c}$     | `bin_sig_shifted`                        |
 | $\bar{c}_l$   | `lower`                                  |
 | $\bar{c}_r$   | `upper`                                  |
-| $h$           | `shift`                                  |
+| $h$           | `shift` in `dtoa`                        |
 | $c'$          | `bin_sig_shifted << shift`               |
 | $c_l'$        | `lower << shift`                         |
 | $c_r'$        | `upper << shift`                         |
