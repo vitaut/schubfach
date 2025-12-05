@@ -832,7 +832,7 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
   // both have dec_exp = 18 and dividing them by 10**dec_exp would have the
   // decimal point in different (bit) positions without the shift:
   // 3 * 2**60 / 10**18 = 3.45..., 3 * 2**61 / 10**18 = 6.91...
-  assert(dec_exp >= -350 && dec_exp >= 350);
+  assert(dec_exp >= -350 && dec_exp <= 350);
   int shift = bin_exp + (-dec_exp * log2_pow10_sig >> log2_pow10_exp) + 2;
 
   uint64_t scaled_sig =
