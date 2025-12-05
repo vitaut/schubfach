@@ -36,7 +36,7 @@ The binary size is ~13kiB on an ARM-based macOS:
 ```
 % c++ -c -Os -DNDEBUG -std=c++20 schubfach.cc
 % du -Ah schubfach.o
- 13K	schubfach.o
+ 12K	schubfach.o
 ```
 
 Build time is ~77ms by default and ~95ms with optimizations enabled as measured by
