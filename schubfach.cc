@@ -814,8 +814,8 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
   // floor(log10(3/4) * 2**fixed_precision)
   constexpr long long floor_log10_3_over_4_fixed = -274'743'187'321;
 
-  // Compute the decimal exponent as floor(log_10(2**bin_exp)) if regular or
-  // floor(log_10(3/4 * 2**bin_exp)) otherwise, without branching.
+  // Compute the decimal exponent as floor(log10(2**bin_exp)) if regular or
+  // floor(log10(3/4 * 2**bin_exp)) otherwise, without branching.
   int dec_exp = (bin_exp * floor_log10_2_fixed +
                  (floor_log10_3_over_4_fixed & (regular - 1LL))) >>
                 fixed_precision;
@@ -829,8 +829,8 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
 
   // Shift to ensure the intermediate result in umul192_upper64_modified has
   // a fixed 128-bit fractional width. For example, 3 * 2**60 and 3 * 2**61
-  // both have dec_exp = 18 and dividing them by 10**dec_exp would give
-  // misaligned results without the shift:
+  // both have dec_exp = 18 and dividing them by 10**dec_exp would have the
+  // decimal point in different positions without the shift:
   // 3 * 2**60 / 10**18 = 3.45..., 3 * 2**61 / 10**18 = 6.91...
   int shift =
       bin_exp + (-dec_exp * floor_log2_pow10_fixed >> fixed_precision2) + 2;
