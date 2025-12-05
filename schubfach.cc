@@ -804,6 +804,12 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
   bin_sig ^= implicit_bit;
   bin_exp -= num_sig_bits + 1023;  // Remove the exponent bias.
 
+  // Handle small integers.
+  if (bin_exp < 0 & bin_exp >= -num_sig_bits) {
+    long f = bin_sig >> -bin_exp;
+    if (f << -bin_exp == bin_sig) return write(buffer, f, 0);
+  }
+
   // Shift the significand so that boundaries are integer.
   uint64_t bin_sig_shifted = bin_sig << 2;
 
