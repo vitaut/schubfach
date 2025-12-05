@@ -846,10 +846,10 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
   uint64_t dec_sig_under = scaled_sig >> 2;
   uint64_t bin_sig_lsb = bin_sig & 1;
   if (dec_sig_under >= 10) {
-    // Compute the significands of the under- and overestimate (10s' and 10t').
+    // Compute the significands of the under- and overestimate.
     uint64_t dec_sig_under2 = 10 * (dec_sig_under / 10);
     uint64_t dec_sig_over2 = dec_sig_under2 + 10;
-    // Check if the under- and overestimates (u' and w') are in the interval.
+    // Check if the under- and overestimates are in the interval.
     bool under_in = lower + bin_sig_lsb <= dec_sig_under2 << 2;
     bool over_in = (dec_sig_over2 << 2) + bin_sig_lsb <= upper;
     if (under_in != over_in)
