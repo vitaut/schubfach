@@ -796,7 +796,7 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
       memcpy(buffer, "0", 2);
       return;
     }
-    // Handle a subnormal.
+    // Handle subnormals.
     bin_sig ^= implicit_bit;
     ++bin_exp;
     regular = true;
