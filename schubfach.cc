@@ -693,7 +693,7 @@ auto umul192_upper64_modified(uint64_t pow10_hi, uint64_t pow10_lo,
 
 // Computes floor(log10(2**e)) for e in [-2620, 2620].
 inline auto floor_log10_pow2(int e) noexcept -> int {
-  assert(e <= 2620 && e >= -2620);
+  assert(e >= -2620 && e <= 2620);
   // floor(log10(2) * 2**fixed_precision)
   constexpr int floor_log10_2_fixed = 315'653, fixed_precision = 20;
   return (e * floor_log10_2_fixed) >> fixed_precision;
