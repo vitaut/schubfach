@@ -691,14 +691,13 @@ auto umul192_upper64_modified(uint64_t pow10_hi, uint64_t pow10_lo,
   return result | (((z & mask) + mask) >> 63);
 }
 
-// floor(log10(2) * 2**fixed_precision)
-constexpr int floor_log10_2_fixed = 315'653;
-constexpr int fixed_precision = 20;
+constexpr int log10_2_sig = 315'653;  // round(log10(2) * 2**log10_2_exp)
+constexpr int log10_2_exp = 20;
 
 // Computes floor(log10(2**e)) for e in [-2620, 2620].
 inline auto floor_log10_pow2(int e) noexcept -> int {
   assert(e >= -2620 && e <= 2620);
-  return (e * floor_log10_2_fixed) >> fixed_precision;
+  return (e * log10_2_sig) >> log10_2_exp;
 }
 
 auto write8digits(char* buffer, unsigned n) noexcept -> char* {
@@ -812,21 +811,21 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
   uint64_t lower = bin_sig_shifted - (regular + 1);
   uint64_t upper = bin_sig_shifted + 2;
 
-  // floor(log10(3/4) * 2**fixed_precision)
-  constexpr int floor_log10_3_over_4_fixed = -131'008;
+  // round(log10(3/4) * 2**log10_2_exp)
+  constexpr int log10_3_over_4_sig = -131'008;
 
   // Compute the decimal exponent as floor(log10(2**bin_exp)) if regular or
   // floor(log10(3/4 * 2**bin_exp)) otherwise, without branching.
   assert(bin_exp >= -1334 && bin_exp <= 2620);
-  int dec_exp = (bin_exp * floor_log10_2_fixed +
-                 (floor_log10_3_over_4_fixed & (regular - 1))) >>
-                fixed_precision;
+  int dec_exp =
+      (bin_exp * log10_2_sig + (log10_3_over_4_sig & (regular - 1))) >>
+      log10_2_exp;
 
   constexpr int dec_exp_min = -292;
   auto [pow10_hi, pow10_lo] = pow10_significands[-dec_exp - dec_exp_min];
 
-  // floor(log2(10) * 2**fixed_precision2)
-  constexpr int floor_log2_pow10_fixed = 217'707, fixed_precision2 = 16;
+  // round(log2(10) * 2**log2_pow10_exp) + 1
+  constexpr int log2_pow10_sig = 217'707, log2_pow10_exp = 16;
 
   // Shift to ensure the intermediate result in umul192_upper64_modified has
   // a fixed 128-bit fractional width. For example, 3 * 2**60 and 3 * 2**61
@@ -834,8 +833,7 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
   // decimal point in different (bit) positions without the shift:
   // 3 * 2**60 / 10**18 = 3.45..., 3 * 2**61 / 10**18 = 6.91...
   assert(dec_exp >= -350 && dec_exp >= 350);
-  int shift =
-      bin_exp + (-dec_exp * floor_log2_pow10_fixed >> fixed_precision2) + 2;
+  int shift = bin_exp + (-dec_exp * log2_pow10_sig >> log2_pow10_exp) + 2;
 
   uint64_t scaled_sig =
       umul192_upper64_modified(pow10_hi, pow10_lo, bin_sig_shifted << shift);
