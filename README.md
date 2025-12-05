@@ -31,7 +31,7 @@ Average formatting time from [dtoa-benchmark](https://github.com/fmtlib/dtoa-ben
 | fmt           | 22.331    | 39.42x  |
 | dragonbox     | 20.782    | 42.36x  |
 
-The binary size is ~13kiB on an ARM-based macOS:
+The binary size is ~12kiB on an ARM-based macOS:
 
 ```
 % c++ -c -Os -DNDEBUG -std=c++20 schubfach.cc
