@@ -691,11 +691,13 @@ auto umul192_upper64_modified(uint64_t pow10_hi, uint64_t pow10_lo,
   return result | (((z & mask) + mask) >> 63);
 }
 
+// floor(log10(2) * 2**fixed_precision)
+constexpr int floor_log10_2_fixed = 315'653;
+constexpr int fixed_precision = 20;
+
 // Computes floor(log10(2**e)) for e in [-2620, 2620].
 inline auto floor_log10_pow2(int e) noexcept -> int {
   assert(e >= -2620 && e <= 2620);
-  // floor(log10(2) * 2**fixed_precision)
-  constexpr int floor_log10_2_fixed = 315'653, fixed_precision = 20;
   return (e * floor_log10_2_fixed) >> fixed_precision;
 }
 
@@ -810,16 +812,14 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
   uint64_t lower = bin_sig_shifted - (regular + 1);
   uint64_t upper = bin_sig_shifted + 2;
 
-  // floor(log10(2) * 2**fixed_precision)
-  constexpr long long floor_log10_2_fixed = 661'971'961'083;
   // floor(log10(3/4) * 2**fixed_precision)
-  constexpr long long floor_log10_3_over_4_fixed = -274'743'187'321;
-  constexpr int fixed_precision = 41;
+  constexpr int floor_log10_3_over_4_fixed = -131'008;
 
   // Compute the decimal exponent as floor(log10(2**bin_exp)) if regular or
   // floor(log10(3/4 * 2**bin_exp)) otherwise, without branching.
+  assert(bin_exp >= -1334 && bin_exp <= 2620);
   int dec_exp = (bin_exp * floor_log10_2_fixed +
-                 (floor_log10_3_over_4_fixed & (regular - 1LL))) >>
+                 (floor_log10_3_over_4_fixed & (regular - 1))) >>
                 fixed_precision;
 
   constexpr int dec_exp_min = -292;
