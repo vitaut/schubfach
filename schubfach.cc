@@ -32,7 +32,8 @@ using uint128_t = unsigned __int128;
 using uint128_t = uint128;
 #endif  // __SIZEOF_INT128__
 
-// Significands of overestimates of powers of 10. Generated with gen-pow10.py.
+// 126-bit significands of overestimates of powers of 10.
+// Generated with gen-pow10.py.
 const uint128 pow10_significands[] = {
     {0x7fbbd8fe5f5e6e27, 0x497a3a2704eec3df},  // -292
     {0x4fd5679efb9b04d8, 0x5dec645863153a6c},  // -291
@@ -833,14 +834,18 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
   // round(log2(10) * 2**log2_pow10_exp) + 1
   constexpr int log2_pow10_sig = 217'707, log2_pow10_exp = 16;
 
+  assert(dec_exp >= -350 && dec_exp <= 350);
+  // floor(log2(10**-dec_exp))
+  int pow10_bin_exp = -dec_exp * log2_pow10_sig >> log2_pow10_exp;
+  // pow10 = ((pow10_hi << 63) | pow10_lo) * 2**(pow10_bin_exp - 126 + 1)
+
   // Shift to ensure the intermediate result in umul192_upper64_modified has
   // a fixed 128-bit fractional width. For example, 3 * 2**59 and 3 * 2**60
   // both have dec_exp = 2 and dividing them by 10**dec_exp would have the
   // decimal point in different (bit) positions without the shift:
   //   3 * 2**59 / 100 = 1.72...e+16 (shift = 3)
   //   3 * 2**60 / 100 = 3.45...e+16 (shift = 4)
-  assert(dec_exp >= -350 && dec_exp <= 350);
-  int shift = bin_exp + (-dec_exp * log2_pow10_sig >> log2_pow10_exp) + 2;
+  int shift = bin_exp + pow10_bin_exp + 2;
 
   uint64_t scaled_sig =
       umul192_upper64_modified(pow10_hi, pow10_lo, bin_sig_shifted << shift);
