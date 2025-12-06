@@ -1,4 +1,4 @@
-// Implementation of the Schubfach algorithm: 
+// Implementation of the Schubfach algorithm:
 // https://fmt.dev/papers/Schubfach4.pdf.
 // Copyright (c) 2025 - present, Victor Zverovich
 // Distributed under the MIT license (see LICENSE).
@@ -680,13 +680,13 @@ auto umul128(uint64_t x, uint64_t y) noexcept -> uint128_t {
 
 // Computes upper 64 bits of multiplication of pow10 and scaled_sig with
 // modified round-to-odd rounding of the result,
-// where pow10 = pow10_hi * 2**63 + pow10_lo.
+// where pow10 = (pow10_hi << 63) | pow10_lo.
 auto umul192_upper64_modified(uint64_t pow10_hi, uint64_t pow10_lo,
                               uint64_t scaled_sig) noexcept -> uint64_t {
-  uint64_t x_hi = static_cast<uint64_t>(umul128(pow10_lo, scaled_sig) >> 64);
+  uint64_t x_hi = uint64_t(umul128(pow10_lo, scaled_sig) >> 64);
   uint128_t y = umul128(pow10_hi, scaled_sig);
-  uint64_t z = (static_cast<uint64_t>(y) >> 1) + x_hi;
-  uint64_t result = static_cast<uint64_t>(y >> 64) + (z >> 63);
+  uint64_t z = (uint64_t(y) >> 1) + x_hi;
+  uint64_t result = uint64_t(y >> 64) + (z >> 63);
   constexpr uint64_t mask = (uint64_t(1) << 63) - 1;
   // OR with 1 if z is not divisible by 2**63.
   return result | (((z & mask) + mask) >> 63);
@@ -706,9 +706,7 @@ auto write8digits(char* buffer, unsigned n) noexcept -> char* {
   // https://inria.hal.science/hal-00864293/.
   constexpr int shift = 28;
   constexpr uint64_t magic = 193'428'131'138'340'668;
-  unsigned y =
-      static_cast<uint64_t>(umul128((uint64_t(n) + 1) << shift, magic) >> 84) -
-      1;
+  unsigned y = uint64_t(umul128((uint64_t(n) + 1) << shift, magic) >> 84) - 1;
   for (int i = 0; i < 8; ++i) {
     unsigned t = 10 * y;
     *buffer++ = '0' + (t >> shift);
@@ -747,11 +745,11 @@ void write(char* buffer, uint64_t dec_sig, int dec_exp) noexcept {
   dec_exp += len - 1;
 
   constexpr int pow10_8 = 100'000'000;
-  unsigned hi = static_cast<unsigned>(dec_sig / pow10_8);
+  unsigned hi = unsigned(dec_sig / pow10_8);
   *buffer++ = '0' + hi / pow10_8;
   *buffer++ = '.';
   buffer = write8digits(buffer, hi % pow10_8);
-  unsigned lo = static_cast<unsigned>(dec_sig % pow10_8);
+  unsigned lo = unsigned(dec_sig % pow10_8);
   if (lo != 0) buffer = write8digits(buffer, lo);
 
   // Remove trailing zeros.
@@ -782,7 +780,7 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
 
   constexpr int num_sig_bits = std::numeric_limits<double>::digits - 1;
   constexpr int exp_mask = 0x7ff;
-  int bin_exp = static_cast<int>(bits >> num_sig_bits) & exp_mask;
+  int bin_exp = int(bits >> num_sig_bits) & exp_mask;
 
   constexpr uint64_t implicit_bit = uint64_t(1) << num_sig_bits;
   uint64_t bin_sig = bits & (implicit_bit - 1);  // binary significand
