@@ -806,7 +806,7 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
 
   // Handle small integers.
   if ((bin_exp < 0) & (bin_exp >= -num_sig_bits)) {
-    long f = bin_sig >> -bin_exp;
+    uint64_t f = bin_sig >> -bin_exp;
     if (f << -bin_exp == bin_sig) return write(buffer, f, 0);
   }
 
