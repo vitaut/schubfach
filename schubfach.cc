@@ -721,27 +721,21 @@ struct div_mod_result {
   uint32_t mod;
 };
 
-// Returns {value / 100, value % 100} correct for values of up to 3 decimal
-// digits.
-inline auto divmod100_3(uint32_t value) -> div_mod_result {
-  assert(value <= 1'098);
-  constexpr int exp = 12, sig = (1 << exp) / 100 + 1;
-  uint32_t div = (value * sig) >> exp;  // value / 100
-  return {div, value - div * 100};
-}
-
-// Returns {value / 100, value % 100} correct for values of up to 4 decimal
-// digits.
-inline auto divmod100_4(uint32_t value) -> div_mod_result {
-  assert(value <= 43'698);
-  constexpr int exp = 19, sig = (1 << exp) / 100 + 1;
+// Returns {value / 100, value % 100} correct for values of up to num_digits
+// decimal digits where num_digits should be 3 or 4.
+template <int num_digits>
+inline auto divmod100(uint32_t value) -> div_mod_result {
+  static_assert(num_digits == 3 || num_digits == 4, "wrong number of digits");
+  constexpr int exp = num_digits == 3 ? 12 : 19;
+  assert(value < num_digits == 3 ? 1'000 : 10'000);
+  constexpr int sig = (1 << exp) / 100 + 1;
   uint32_t div = (value * sig) >> exp;  // value / 100
   return {div, value - div * 100};
 }
 
 // Writes 4 digits and removes trailing zeros.
 auto write4digits(uint32_t value, char* buffer) -> char* {
-  auto [aa, bb] = divmod100_4(value);
+  auto [aa, bb] = divmod100<4>(value);
   memcpy(buffer + 0, digits2 + aa * 2, 2);
   memcpy(buffer + 2, digits2 + bb * 2, 2);
   return buffer + 4 - num_trailing_zeros[bb] -
@@ -752,13 +746,13 @@ auto write4digits(uint32_t value, char* buffer) -> char* {
 // trailing zeros.
 char* write_significand(uint64_t value, char* buffer) {
   // Each digits is denoted by a letter.
-  uint32_t abbccddee = uint32_t(value / 100000000);
-  uint32_t ffgghhii = uint32_t(value % 100000000);
-  uint32_t abbcc = abbccddee / 10000;
-  uint32_t ddee = abbccddee % 10000;
+  uint32_t abbccddee = uint32_t(value / 100'000'000);
+  uint32_t ffgghhii = uint32_t(value % 100'000'000);
+  uint32_t abbcc = abbccddee / 10'000;
+  uint32_t ddee = abbccddee % 10'000;
   uint32_t abb = abbcc / 100;
   uint32_t cc = abbcc % 100;
-  auto [a, bb] = divmod100_3(abb);
+  auto [a, bb] = divmod100<3>(abb);
 
   *buffer = '0' + a;
   buffer += a != 0;
@@ -770,10 +764,10 @@ char* write_significand(uint64_t value, char* buffer) {
     if (ddee != 0) return write4digits(ddee, buffer);
     return buffer - num_trailing_zeros[cc] - (cc == 0) * num_trailing_zeros[bb];
   }
-  auto [dd, ee] = divmod100_4(ddee);
-  uint32_t ffgg = ffgghhii / 10000;
-  uint32_t hhii = ffgghhii % 10000;
-  auto [ff, gg] = divmod100_4(ffgg);
+  auto [dd, ee] = divmod100<4>(ddee);
+  uint32_t ffgg = ffgghhii / 10'000;
+  uint32_t hhii = ffgghhii % 10'000;
+  auto [ff, gg] = divmod100<4>(ffgg);
   memcpy(buffer + 0, digits2 + dd * 2, 2);
   memcpy(buffer + 2, digits2 + ee * 2, 2);
   memcpy(buffer + 4, digits2 + ff * 2, 2);
