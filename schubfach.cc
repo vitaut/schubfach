@@ -721,7 +721,7 @@ char* write4digits(uint32_t value, char* buffer) {
   uint32_t bb = value - aa * 100;      // value % 100
   memcpy(buffer + 4, digits2 + aa * 2, 2);
   memcpy(buffer + 6, digits2 + bb * 2, 2);
-  return buffer + 8 - num_trailing_zeros[bb] +
+  return buffer + 8 - num_trailing_zeros[bb] -
          (((bb != 0) - 1) & num_trailing_zeros[aa]);
 }
 
