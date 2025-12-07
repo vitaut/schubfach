@@ -849,8 +849,7 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
   // floor(log10(3/4 * 2**bin_exp)) otherwise, without branching.
   assert(bin_exp >= -1334 && bin_exp <= 2620);
   int dec_exp =
-      (bin_exp * log10_2_sig + (log10_3_over_4_sig & (regular - 1))) >>
-      log10_2_exp;
+      (bin_exp * log10_2_sig + !regular * log10_3_over_4_sig) >> log10_2_exp;
 
   constexpr int dec_exp_min = -292;
   auto [pow10_hi, pow10_lo] = pow10_significands[-dec_exp - dec_exp_min];
