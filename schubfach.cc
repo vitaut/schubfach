@@ -727,7 +727,7 @@ template <int num_digits>
 inline auto divmod100(uint32_t value) -> div_mod_result {
   static_assert(num_digits == 3 || num_digits == 4, "wrong number of digits");
   constexpr int exp = num_digits == 3 ? 12 : 19;
-  assert(value < num_digits == 3 ? 1'000 : 10'000);
+  assert(value < (num_digits == 3 ? 1'000 : 10'000));
   constexpr int sig = (1 << exp) / 100 + 1;
   uint32_t div = (value * sig) >> exp;  // value / 100
   return {div, value - div * 100};
@@ -820,12 +820,12 @@ void write(char* buffer, uint64_t dec_sig, int dec_exp) noexcept {
   }
   *buffer++ = sign;
   if (dec_exp >= 100) {
-    *buffer++ = '0' + dec_exp / 100;
-    dec_exp %= 100;
+    auto [a, bb] = divmod100<3>(dec_exp);
+    *buffer++ = '0' + a;
+    dec_exp = bb;
   }
-  *buffer++ = '0' + dec_exp / 10;
-  *buffer++ = '0' + dec_exp % 10;
-  *buffer = '\0';
+  memcpy(buffer, digits2 + dec_exp * 2, 2);
+  buffer[2] = '\0';
 }
 
 }  // namespace
