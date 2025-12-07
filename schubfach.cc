@@ -715,7 +715,7 @@ struct div_mod_result {
 // Returns {value / 100, value % 100} correct for values of up to num_digits
 // decimal digits where num_digits should be 3 or 4.
 template <int num_digits>
-inline auto divmod100(uint32_t value) -> div_mod_result {
+inline auto divmod100(uint32_t value) noexcept -> div_mod_result {
   static_assert(num_digits == 3 || num_digits == 4, "wrong number of digits");
   constexpr int exp = num_digits == 3 ? 12 : 19;
   assert(value < (num_digits == 3 ? 1'000 : 10'000));
@@ -725,7 +725,7 @@ inline auto divmod100(uint32_t value) -> div_mod_result {
 }
 
 // Writes 4 digits and removes trailing zeros.
-auto write4digits(char* buffer, uint32_t value) -> char* {
+auto write4digits(char* buffer, uint32_t value) noexcept -> char* {
   auto [aa, bb] = divmod100<4>(value);
   memcpy(buffer + 0, digits2 + aa * 2, 2);
   memcpy(buffer + 2, digits2 + bb * 2, 2);
@@ -735,7 +735,7 @@ auto write4digits(char* buffer, uint32_t value) -> char* {
 
 // Writes a significand consisting of 16 or 17 decimal digits and removes
 // trailing zeros.
-auto write_significand(char* buffer, uint64_t value) -> char* {
+auto write_significand(char* buffer, uint64_t value) noexcept -> char* {
   // Each digits is denoted by a letter so value is abbccddeeffgghhii where
   // digit a can be zero.
   uint32_t abbccddee = uint32_t(value / 100'000'000);
