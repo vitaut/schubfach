@@ -701,6 +701,29 @@ inline auto floor_log10_pow2(int e) noexcept -> int {
   return (e * log10_2_sig) >> log10_2_exp;
 }
 
+alignas(2) static const char digits2[] =
+    "0001020304050607080910111213141516171819"
+    "2021222324252627282930313233343536373839"
+    "4041424344454647484950515253545556575859"
+    "6061626364656667686970717273747576777879"
+    "8081828384858687888990919293949596979899";
+
+static const char num_trailing_zeros[] =
+    "\2\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0"
+    "\1\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0"
+    "\1\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0"
+    "\1\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0"
+    "\1\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0";
+
+char* write4digits(uint32_t value, char* buffer) {
+  uint32_t aa = (value * 5243) >> 19;  // value / 100
+  uint32_t bb = value - aa * 100;      // value % 100
+  memcpy(buffer + 4, digits2 + aa * 2, 2);
+  memcpy(buffer + 6, digits2 + bb * 2, 2);
+  return buffer + 8 - num_trailing_zeros[bb] +
+         (((bb != 0) - 1) & num_trailing_zeros[aa]);
+}
+
 auto write8digits(char* buffer, unsigned n) noexcept -> char* {
   // Based on Division-Free Binary-to-Decimal Conversion:
   // https://inria.hal.science/hal-00864293/.
