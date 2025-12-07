@@ -745,7 +745,8 @@ auto write4digits(uint32_t value, char* buffer) -> char* {
 // Writes a significand consisting of 16 or 17 decimal digits and removes
 // trailing zeros.
 char* write_significand(uint64_t value, char* buffer) {
-  // Each digits is denoted by a letter.
+  // Each digits is denoted by a letter so value is abbccddeeffgghhii where
+  // digit a can be zero.
   uint32_t abbccddee = uint32_t(value / 100'000'000);
   uint32_t ffgghhii = uint32_t(value % 100'000'000);
   uint32_t abbcc = abbccddee / 10'000;
@@ -773,7 +774,8 @@ char* write_significand(uint64_t value, char* buffer) {
   memcpy(buffer + 4, digits2 + ff * 2, 2);
   memcpy(buffer + 6, digits2 + gg * 2, 2);
   if (hhii != 0) return write4digits(hhii, buffer + 8);
-  return buffer + 8 - num_trailing_zeros[gg] - (gg == 0) * num_trailing_zeros[ff];
+  return buffer + 8 - num_trailing_zeros[gg] -
+         (gg == 0) * num_trailing_zeros[ff];
 }
 
 auto write8digits(char* buffer, unsigned n) noexcept -> char* {
