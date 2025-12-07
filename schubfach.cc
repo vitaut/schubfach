@@ -716,13 +716,27 @@ const char num_trailing_zeros[] =
     "\1\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0"
     "\1\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0";
 
-char* write4digits(uint32_t value, char* buffer) {
-  uint32_t aa = (value * 5243) >> 19;  // value / 100
-  uint32_t bb = value - aa * 100;      // value % 100
-  memcpy(buffer + 4, digits2 + aa * 2, 2);
-  memcpy(buffer + 6, digits2 + bb * 2, 2);
-  return buffer + 8 - num_trailing_zeros[bb] -
-         (((bb != 0) - 1) & num_trailing_zeros[aa]);
+// Returns value if condition is true, 0 otherwise.
+inline auto select_if(bool condition, uint32_t value) -> uint32_t {
+  return (!condition - 1) & value;
+}
+
+struct div_mod_result {
+  uint32_t div;
+  uint32_t mod;
+};
+
+inline auto divmod100(uint32_t value) -> div_mod_result {
+  uint32_t div = (value * 5243) >> 19;  // value / 100
+  return {div, value - div * 100};
+}
+
+auto write4digits(uint32_t value, char* buffer) -> char* {
+  auto [aa, bb] = divmod100(value);
+  memcpy(buffer + 0, digits2 + aa * 2, 2);
+  memcpy(buffer + 2, digits2 + bb * 2, 2);
+  return buffer + 4 - num_trailing_zeros[bb] -
+         select_if(bb == 0, num_trailing_zeros[aa]);
 }
 
 auto write8digits(char* buffer, unsigned n) noexcept -> char* {
