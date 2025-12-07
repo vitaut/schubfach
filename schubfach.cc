@@ -725,7 +725,7 @@ inline auto divmod100(uint32_t value) -> div_mod_result {
 }
 
 // Writes 4 digits and removes trailing zeros.
-auto write4digits(uint32_t value, char* buffer) -> char* {
+auto write4digits(char* buffer, uint32_t value) -> char* {
   auto [aa, bb] = divmod100<4>(value);
   memcpy(buffer + 0, digits2 + aa * 2, 2);
   memcpy(buffer + 2, digits2 + bb * 2, 2);
@@ -735,7 +735,7 @@ auto write4digits(uint32_t value, char* buffer) -> char* {
 
 // Writes a significand consisting of 16 or 17 decimal digits and removes
 // trailing zeros.
-auto write_significand(uint64_t value, char* buffer) -> char* {
+auto write_significand(char* buffer, uint64_t value) -> char* {
   // Each digits is denoted by a letter so value is abbccddeeffgghhii where
   // digit a can be zero.
   uint32_t abbccddee = uint32_t(value / 100'000'000);
@@ -753,7 +753,7 @@ auto write_significand(uint64_t value, char* buffer) -> char* {
   buffer += 4;
 
   if (ffgghhii == 0) {
-    if (ddee != 0) return write4digits(ddee, buffer);
+    if (ddee != 0) return write4digits(buffer, ddee);
     return buffer - num_trailing_zeros[cc] - (cc == 0) * num_trailing_zeros[bb];
   }
   auto [dd, ee] = divmod100<4>(ddee);
@@ -764,7 +764,7 @@ auto write_significand(uint64_t value, char* buffer) -> char* {
   memcpy(buffer + 2, digits2 + ee * 2, 2);
   memcpy(buffer + 4, digits2 + ff * 2, 2);
   memcpy(buffer + 6, digits2 + gg * 2, 2);
-  if (hhii != 0) return write4digits(hhii, buffer + 8);
+  if (hhii != 0) return write4digits(buffer + 8, hhii);
   return buffer + 8 - num_trailing_zeros[gg] -
          (gg == 0) * num_trailing_zeros[ff];
 }
@@ -774,7 +774,7 @@ void write(char* buffer, uint64_t dec_sig, int dec_exp) noexcept {
   dec_exp += 16 - (dec_sig < 10'000'000'000'000'000);
 
   char* start = buffer;
-  buffer = write_significand(dec_sig, buffer + 1);
+  buffer = write_significand(buffer + 1, dec_sig);
   start[0] = start[1];
   start[1] = '.';
 
