@@ -708,7 +708,8 @@ alignas(2) static const char digits2[] =
     "6061626364656667686970717273747576777879"
     "8081828384858687888990919293949596979899";
 
-static const char num_trailing_zeros[] =
+// The idea of branchless trailing zero removal is by Yaoyuan Guo (ibireme).
+const char num_trailing_zeros[] =
     "\2\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0"
     "\1\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0"
     "\1\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0"
