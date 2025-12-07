@@ -692,15 +692,6 @@ auto umul192_upper64_modified(uint64_t pow10_hi, uint64_t pow10_lo,
   return result | (((z & mask) + mask) >> 63);
 }
 
-constexpr int log10_2_sig = 315'653;  // round(log10(2) * 2**log10_2_exp)
-constexpr int log10_2_exp = 20;
-
-// Computes floor(log10(2**e)) for e in [-2620, 2620].
-inline auto floor_log10_pow2(int e) noexcept -> int {
-  assert(e >= -2620 && e <= 2620);
-  return (e * log10_2_sig) >> log10_2_exp;
-}
-
 alignas(2) static const char digits2[] =
     "0001020304050607080910111213141516171819"
     "2021222324252627282930313233343536373839"
@@ -744,7 +735,7 @@ auto write4digits(uint32_t value, char* buffer) -> char* {
 
 // Writes a significand consisting of 16 or 17 decimal digits and removes
 // trailing zeros.
-char* write_significand(uint64_t value, char* buffer) {
+auto write_significand(uint64_t value, char* buffer) -> char* {
   // Each digits is denoted by a letter so value is abbccddeeffgghhii where
   // digit a can be zero.
   uint32_t abbccddee = uint32_t(value / 100'000'000);
@@ -778,34 +769,9 @@ char* write_significand(uint64_t value, char* buffer) {
          (gg == 0) * num_trailing_zeros[ff];
 }
 
-const uint64_t pow10[] = {
-    1,
-    10,
-    100,
-    1'000,
-    10'000,
-    100'000,
-    1'000'000,
-    10'000'000,
-    100'000'000,
-    1'000'000'000,
-    10'000'000'000,
-    100'000'000'000,
-    1'000'000'000'000,
-    10'000'000'000'000,
-    100'000'000'000'000,
-    1'000'000'000'000'000,
-    10'000'000'000'000'000,
-    100'000'000'000'000'000,
-};
-
 // Writes the decimal FP number dec_sig * 10**dec_exp to buffer.
 void write(char* buffer, uint64_t dec_sig, int dec_exp) noexcept {
-  int len = floor_log10_pow2(std::numeric_limits<uint64_t>::digits -
-                             std::countl_zero(dec_sig));
-  if (dec_sig >= pow10[len]) ++len;
-  dec_sig *= pow10[std::numeric_limits<double>::max_digits10 - len];
-  dec_exp += len - 1;
+  dec_exp += 16 - (dec_sig < 10'000'000'000'000'000);
 
   char* start = buffer;
   buffer = write_significand(dec_sig, buffer + 1);
@@ -873,8 +839,11 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
   uint64_t lower = bin_sig_shifted - (regular + 1);
   uint64_t upper = bin_sig_shifted + 2;
 
-  // round(log10(3/4) * 2**log10_2_exp)
+  // log10_3_over_4_sig = round(log10(3/4) * 2**log10_2_exp)
   constexpr int log10_3_over_4_sig = -131'008;
+  // log10_2_sig = round(log10(2) * 2**log10_2_exp)
+  constexpr int log10_2_sig = 315'653;
+  constexpr int log10_2_exp = 20;
 
   // Compute the decimal exponent as floor(log10(2**bin_exp)) if regular or
   // floor(log10(3/4 * 2**bin_exp)) otherwise, without branching.
