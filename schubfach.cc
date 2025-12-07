@@ -778,20 +778,6 @@ char* write_significand(uint64_t value, char* buffer) {
          (gg == 0) * num_trailing_zeros[ff];
 }
 
-auto write8digits(char* buffer, unsigned n) noexcept -> char* {
-  // Based on Division-Free Binary-to-Decimal Conversion:
-  // https://inria.hal.science/hal-00864293/.
-  constexpr int shift = 28;
-  constexpr uint64_t magic = 193'428'131'138'340'668;
-  unsigned y = uint64_t(umul128((uint64_t(n) + 1) << shift, magic) >> 84) - 1;
-  for (int i = 0; i < 8; ++i) {
-    unsigned t = 10 * y;
-    *buffer++ = '0' + (t >> shift);
-    y = t & ((1 << shift) - 1);
-  }
-  return buffer;
-}
-
 const uint64_t pow10[] = {
     1,
     10,
@@ -821,16 +807,10 @@ void write(char* buffer, uint64_t dec_sig, int dec_exp) noexcept {
   dec_sig *= pow10[std::numeric_limits<double>::max_digits10 - len];
   dec_exp += len - 1;
 
-  constexpr int pow10_8 = 100'000'000;
-  unsigned hi = unsigned(dec_sig / pow10_8);
-  *buffer++ = '0' + hi / pow10_8;
-  *buffer++ = '.';
-  buffer = write8digits(buffer, hi % pow10_8);
-  unsigned lo = unsigned(dec_sig % pow10_8);
-  if (lo != 0) buffer = write8digits(buffer, lo);
-
-  // Remove trailing zeros.
-  while (buffer[-1] == '0') --buffer;
+  char* start = buffer;
+  buffer = write_significand(dec_sig, buffer + 1);
+  start[0] = start[1];
+  start[1] = '.';
 
   *buffer++ = 'e';
   char sign = '+';
