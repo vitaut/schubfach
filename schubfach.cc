@@ -692,98 +692,70 @@ auto umul192_upper64_modified(uint64_t pow10_hi, uint64_t pow10_lo,
   return result | (((z & mask) + mask) >> 63);
 }
 
-// Converts value in the range [0, 100) to a string. GCC generates a bit better
-// code when value is pointer-size (https://www.godbolt.org/z/5fEPMT1cc).
-inline auto digits2(size_t value) noexcept -> const char* {
-  // Align data since unaligned access may be slower when crossing a
-  // hardware-specific boundary.
-  alignas(2) static const char data[] =
-      "0001020304050607080910111213141516171819"
-      "2021222324252627282930313233343536373839"
-      "4041424344454647484950515253545556575859"
-      "6061626364656667686970717273747576777879"
-      "8081828384858687888990919293949596979899";
-  return &data[value * 2];
+// log10_2_sig = round(log10(2) * 2**log10_2_exp)
+constexpr int64_t log10_2_sig = 661'971'961'083;
+constexpr int log10_2_exp = 41;
+
+// Computes floor(log10(pow(2, e))) for e <= 5456721.
+auto floor_log10_pow2(int e) noexcept -> int {
+  return e * log10_2_sig >> log10_2_exp;
 }
 
-// The idea of branchless trailing zero removal is by Yaoyuan Guo (ibireme).
-const char num_trailing_zeros[] =
-    "\2\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0"
-    "\1\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0"
-    "\1\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0"
-    "\1\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0"
-    "\1\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0";
-
-struct div_mod_result {
-  uint32_t div;
-  uint32_t mod;
-};
-
-// Returns {value / 100, value % 100} correct for values of up to num_digits
-// decimal digits where num_digits should be 3 or 4.
-template <int num_digits>
-inline auto divmod100(uint32_t value) noexcept -> div_mod_result {
-  static_assert(num_digits == 3 || num_digits == 4, "wrong number of digits");
-  constexpr int exp = num_digits == 3 ? 12 : 19;
-  assert(value < (num_digits == 3 ? 1'000 : 10'000));
-  constexpr int sig = (1 << exp) / 100 + 1;
-  uint32_t div = (value * sig) >> exp;  // value / 100
-  return {div, value - div * 100};
-}
-
-// Writes 4 digits and removes trailing zeros.
-auto write4digits(char* buffer, uint32_t value) noexcept -> char* {
-  auto [aa, bb] = divmod100<4>(value);
-  memcpy(buffer + 0, digits2(aa), 2);
-  memcpy(buffer + 2, digits2(bb), 2);
-  return buffer + 4 - num_trailing_zeros[bb] -
-         (bb == 0) * num_trailing_zeros[aa];
-}
-
-// Writes a significand consisting of 16 or 17 decimal digits and removes
-// trailing zeros.
-auto write_significand(char* buffer, uint64_t value) noexcept -> char* {
-  // Each digits is denoted by a letter so value is abbccddeeffgghhii where
-  // digit a can be zero.
-  uint32_t abbccddee = uint32_t(value / 100'000'000);
-  uint32_t ffgghhii = uint32_t(value % 100'000'000);
-  uint32_t abbcc = abbccddee / 10'000;
-  uint32_t ddee = abbccddee % 10'000;
-  uint32_t abb = abbcc / 100;
-  uint32_t cc = abbcc % 100;
-  auto [a, bb] = divmod100<3>(abb);
-
-  *buffer = '0' + a;
-  buffer += a != 0;
-  memcpy(buffer + 0, digits2(bb), 2);
-  memcpy(buffer + 2, digits2(cc), 2);
-  buffer += 4;
-
-  if (ffgghhii == 0) {
-    if (ddee != 0) return write4digits(buffer, ddee);
-    return buffer - num_trailing_zeros[cc] - (cc == 0) * num_trailing_zeros[bb];
+auto write8digits(char* buffer, unsigned n) noexcept -> char* {
+  // Based on Division-Free Binary-to-Decimal Conversion:
+  // https://inria.hal.science/hal-00864293/.
+  constexpr int shift = 28;
+  constexpr uint64_t magic = 193'428'131'138'340'668;
+  unsigned y =
+      static_cast<uint64_t>(umul128((uint64_t(n) + 1) << shift, magic) >> 84) -
+      1;
+  for (int i = 0; i < 8; ++i) {
+    unsigned t = 10 * y;
+    *buffer++ = '0' + (t >> shift);
+    y = t & ((1 << shift) - 1);
   }
-  auto [dd, ee] = divmod100<4>(ddee);
-  uint32_t ffgg = ffgghhii / 10'000;
-  uint32_t hhii = ffgghhii % 10'000;
-  auto [ff, gg] = divmod100<4>(ffgg);
-  memcpy(buffer + 0, digits2(dd), 2);
-  memcpy(buffer + 2, digits2(ee), 2);
-  memcpy(buffer + 4, digits2(ff), 2);
-  memcpy(buffer + 6, digits2(gg), 2);
-  if (hhii != 0) return write4digits(buffer + 8, hhii);
-  return buffer + 8 - num_trailing_zeros[gg] -
-         (gg == 0) * num_trailing_zeros[ff];
+  return buffer;
 }
+
+const uint64_t pow10[] = {
+    1,
+    10,
+    100,
+    1'000,
+    10'000,
+    100'000,
+    1'000'000,
+    10'000'000,
+    100'000'000,
+    1'000'000'000,
+    10'000'000'000,
+    100'000'000'000,
+    1'000'000'000'000,
+    10'000'000'000'000,
+    100'000'000'000'000,
+    1'000'000'000'000'000,
+    10'000'000'000'000'000,
+    100'000'000'000'000'000,
+};
 
 // Writes the decimal FP number dec_sig * 10**dec_exp to buffer.
 void write(char* buffer, uint64_t dec_sig, int dec_exp) noexcept {
-  dec_exp += 15 + (dec_sig >= uint64_t(1e16));
+  int len = floor_log10_pow2(std::numeric_limits<uint64_t>::digits -
+                             std::countl_zero(dec_sig));
+  if (dec_sig >= pow10[len]) ++len;
+  dec_sig *= pow10[std::numeric_limits<double>::max_digits10 - len];
+  dec_exp += len - 1;
 
-  char* start = buffer;
-  buffer = write_significand(buffer + 1, dec_sig);
-  start[0] = start[1];
-  start[1] = '.';
+  constexpr int pow10_8 = 100'000'000;
+  unsigned hi = static_cast<unsigned>(dec_sig / pow10_8);
+  *buffer++ = '0' + hi / pow10_8;
+  *buffer++ = '.';
+  buffer = write8digits(buffer, hi % pow10_8);
+  unsigned lo = static_cast<unsigned>(dec_sig % pow10_8);
+  if (lo != 0) buffer = write8digits(buffer, lo);
+
+  // Remove trailing zeros.
+  while (buffer[-1] == '0') --buffer;
 
   *buffer++ = 'e';
   char sign = '+';
@@ -793,12 +765,12 @@ void write(char* buffer, uint64_t dec_sig, int dec_exp) noexcept {
   }
   *buffer++ = sign;
   if (dec_exp >= 100) {
-    auto [a, bb] = divmod100<3>(dec_exp);
-    *buffer++ = '0' + a;
-    dec_exp = bb;
+    *buffer++ = '0' + dec_exp / 100;
+    dec_exp %= 100;
   }
-  memcpy(buffer, digits2(dec_exp), 2);
-  buffer[2] = '\0';
+  *buffer++ = '0' + dec_exp / 10;
+  *buffer++ = '0' + dec_exp % 10;
+  *buffer = '\0';
 }
 
 }  // namespace
@@ -843,20 +815,16 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
   uint64_t bin_sig_shifted = bin_sig << 2;
 
   // Compute the shifted boundaries of the rounding interval (Rv).
-  uint64_t lower = bin_sig_shifted - (regular + 1);
+  uint64_t lower = bin_sig_shifted - (regular ? 2 : 1);
   uint64_t upper = bin_sig_shifted + 2;
 
   // log10_3_over_4_sig = round(log10(3/4) * 2**log10_2_exp)
-  constexpr int log10_3_over_4_sig = -131'008;
-  // log10_2_sig = round(log10(2) * 2**log10_2_exp)
-  constexpr int log10_2_sig = 315'653;
-  constexpr int log10_2_exp = 20;
+  constexpr int64_t log10_3_over_4_sig = -274'743'187'321;
 
   // Compute the decimal exponent as floor(log10(2**bin_exp)) if regular or
   // floor(log10(3/4 * 2**bin_exp)) otherwise, without branching.
-  assert(bin_exp >= -1334 && bin_exp <= 2620);
-  int dec_exp =
-      (bin_exp * log10_2_sig + !regular * log10_3_over_4_sig) >> log10_2_exp;
+  int dec_exp = (bin_exp * log10_2_sig + (!regular ? log10_3_over_4_sig : 0)) >>
+                log10_2_exp;
 
   constexpr int dec_exp_min = -292;
   auto [pow10_hi, pow10_lo] = pow10_significands[-dec_exp - dec_exp_min];
@@ -864,7 +832,6 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
   // round(log2(10) * 2**log2_pow10_exp) + 1
   constexpr int log2_pow10_sig = 217'707, log2_pow10_exp = 16;
 
-  assert(dec_exp >= -350 && dec_exp <= 350);
   // floor(log2(10**-dec_exp))
   int pow10_bin_exp = -dec_exp * log2_pow10_sig >> log2_pow10_exp;
   // pow10 = ((pow10_hi << 63) | pow10_lo) * 2**(pow10_bin_exp - 126 + 1)
