@@ -797,7 +797,7 @@ void write(char* buffer, uint64_t dec_sig, int dec_exp) noexcept {
     *buffer++ = '0' + a;
     dec_exp = bb;
   }
-  memcpy(buffer, digits2 + dec_exp * 2, 2);
+  memcpy(buffer, digits2(dec_exp), 2);
   buffer[2] = '\0';
 }
 
