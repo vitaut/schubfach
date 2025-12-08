@@ -892,14 +892,14 @@ void schubfach::dtoa(double value, char* buffer) noexcept {
     uint64_t dec_sig_under2 = 10 * (dec_sig_under / 10);
     uint64_t dec_sig_over2 = dec_sig_under2 + 10;
     // Check if the under- and overestimates are in the interval.
-    bool under_in = lower + bin_sig_lsb <= dec_sig_under2 << 2;
+    bool under_in = lower + bin_sig_lsb <= (dec_sig_under2 << 2);
     bool over_in = (dec_sig_over2 << 2) + bin_sig_lsb <= upper;
     if (under_in != over_in)
       return write(buffer, under_in ? dec_sig_under2 : dec_sig_over2, dec_exp);
   }
 
   uint64_t dec_sig_over = dec_sig_under + 1;
-  bool under_in = lower + bin_sig_lsb <= dec_sig_under << 2;
+  bool under_in = lower + bin_sig_lsb <= (dec_sig_under << 2);
   bool over_in = (dec_sig_over << 2) + bin_sig_lsb <= upper;
   if (under_in != over_in) {
     // Only one of dec_sig_under or dec_sig_over are in the rounding interval.
