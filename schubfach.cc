@@ -692,12 +692,19 @@ auto umul192_upper64_modified(uint64_t pow10_hi, uint64_t pow10_lo,
   return result | (((z & mask) + mask) >> 63);
 }
 
-alignas(2) const char digits2[] =
-    "0001020304050607080910111213141516171819"
-    "2021222324252627282930313233343536373839"
-    "4041424344454647484950515253545556575859"
-    "6061626364656667686970717273747576777879"
-    "8081828384858687888990919293949596979899";
+// Converts value in the range [0, 100) to a string. GCC generates a bit better
+// code when value is pointer-size (https://www.godbolt.org/z/5fEPMT1cc).
+inline auto digits2(size_t value) noexcept -> const char* {
+  // Align data since unaligned access may be slower when crossing a
+  // hardware-specific boundary.
+  alignas(2) static const char data[] =
+      "0001020304050607080910111213141516171819"
+      "2021222324252627282930313233343536373839"
+      "4041424344454647484950515253545556575859"
+      "6061626364656667686970717273747576777879"
+      "8081828384858687888990919293949596979899";
+  return &data[value * 2];
+}
 
 // The idea of branchless trailing zero removal is by Yaoyuan Guo (ibireme).
 const char num_trailing_zeros[] =
@@ -727,8 +734,8 @@ inline auto divmod100(uint32_t value) noexcept -> div_mod_result {
 // Writes 4 digits and removes trailing zeros.
 auto write4digits(char* buffer, uint32_t value) noexcept -> char* {
   auto [aa, bb] = divmod100<4>(value);
-  memcpy(buffer + 0, digits2 + aa * 2, 2);
-  memcpy(buffer + 2, digits2 + bb * 2, 2);
+  memcpy(buffer + 0, digits2(aa), 2);
+  memcpy(buffer + 2, digits2(bb), 2);
   return buffer + 4 - num_trailing_zeros[bb] -
          (bb == 0) * num_trailing_zeros[aa];
 }
@@ -748,8 +755,8 @@ auto write_significand(char* buffer, uint64_t value) noexcept -> char* {
 
   *buffer = '0' + a;
   buffer += a != 0;
-  memcpy(buffer + 0, digits2 + bb * 2, 2);
-  memcpy(buffer + 2, digits2 + cc * 2, 2);
+  memcpy(buffer + 0, digits2(bb), 2);
+  memcpy(buffer + 2, digits2(cc), 2);
   buffer += 4;
 
   if (ffgghhii == 0) {
@@ -760,10 +767,10 @@ auto write_significand(char* buffer, uint64_t value) noexcept -> char* {
   uint32_t ffgg = ffgghhii / 10'000;
   uint32_t hhii = ffgghhii % 10'000;
   auto [ff, gg] = divmod100<4>(ffgg);
-  memcpy(buffer + 0, digits2 + dd * 2, 2);
-  memcpy(buffer + 2, digits2 + ee * 2, 2);
-  memcpy(buffer + 4, digits2 + ff * 2, 2);
-  memcpy(buffer + 6, digits2 + gg * 2, 2);
+  memcpy(buffer + 0, digits2(dd), 2);
+  memcpy(buffer + 2, digits2(ee), 2);
+  memcpy(buffer + 4, digits2(ff), 2);
+  memcpy(buffer + 6, digits2(gg), 2);
   if (hhii != 0) return write4digits(buffer + 8, hhii);
   return buffer + 8 - num_trailing_zeros[gg] -
          (gg == 0) * num_trailing_zeros[ff];
