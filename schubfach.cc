@@ -692,7 +692,7 @@ auto umul192_upper64_modified(uint64_t pow10_hi, uint64_t pow10_lo,
   return result | (((z & mask) + mask) >> 63);
 }
 
-alignas(2) static const char digits2[] =
+alignas(2) const char digits2[] =
     "0001020304050607080910111213141516171819"
     "2021222324252627282930313233343536373839"
     "4041424344454647484950515253545556575859"
@@ -771,7 +771,7 @@ auto write_significand(char* buffer, uint64_t value) noexcept -> char* {
 
 // Writes the decimal FP number dec_sig * 10**dec_exp to buffer.
 void write(char* buffer, uint64_t dec_sig, int dec_exp) noexcept {
-  dec_exp += 16 - (dec_sig < 10'000'000'000'000'000);
+  dec_exp += 15 + (dec_sig >= uint64_t(1e16));
 
   char* start = buffer;
   buffer = write_significand(buffer + 1, dec_sig);
