@@ -3,6 +3,8 @@
 A C++ implementation of the Schubfach algorithm - fast and accurate conversion
 of IEEE-754 `double` values to decimal strings.
 
+For a faster method see https://github.com/vitaut/zmij.
+
 Usage:
 
 ```c++
